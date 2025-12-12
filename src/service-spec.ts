@@ -76,6 +76,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                 Env: env,
                 StopSignal: serviceConfig.stop_signal,
                 StopGracePeriod: serviceConfig.stop_grace_period,
+                User: serviceConfig.user,
                 Configs: configs,
                 Isolation: "default",
                 HealthCheck: {
