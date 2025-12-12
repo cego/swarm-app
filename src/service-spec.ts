@@ -79,6 +79,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                 User: serviceConfig.user,
                 Configs: configs,
                 Isolation: "default",
+                Dir: serviceConfig.dir,
                 HealthCheck: {
                     Test: serviceConfig.health_check?.test,
                     Interval: serviceConfig.health_check?.interval,
