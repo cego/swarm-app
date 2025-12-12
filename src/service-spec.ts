@@ -88,6 +88,14 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                     StartInterval: serviceConfig.health_check?.start_interval,
                     Retries: serviceConfig.health_check?.retries,
                 },
+                Mounts: Object.entries(serviceConfig.mounts ?? {}).map(([t, m]) => {
+                    return {
+                        Target: t,
+                        Source: m.source,
+                        Type: m.type,
+                        ReadOnly: m.readonly,
+                    };
+                }),
             },
             Placement: {
                 Constraints: serviceConfig.placement?.constraints,
