@@ -46,6 +46,8 @@ service_specs:
     replicas: 2
     stop_signal: SIGQUIT
     stop_grace_period: 10
+    user: '0'
+    dir: /etc/nginx
     placement:
       preferences:
         - { spread: node.hostname }

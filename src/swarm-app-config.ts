@@ -53,6 +53,7 @@ export interface SwarmAppServiceConfig {
         start_period?: number;
         start_interval?: number;
     };
+    dir?: string;
     mounts?: Record<string, {
         source: string;
         type: "bind" | "volume";
@@ -144,6 +145,7 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                             start_interval: {type: "int32"},
                         },
                     },
+                    dir: {type: "string"},
                     mounts: {
                         values: {
                             properties: {
