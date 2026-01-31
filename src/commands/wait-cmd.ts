@@ -41,17 +41,17 @@ export async function handler (args: ArgumentsCamelCase) {
 
         serviceStateMap = new Map<string, string>();
         services = await dockerode.listServices({filters: {label: [`com.docker.stack.namespace=${appName}`]}});
-        tasks = await dockerode.listTasks({filters: {"label": [`com.docker.stack.namespace=${appName}`], "desired-state": ["running"]}}) as Task[];
+        tasks = await dockerode.listTasks({filters: {"label": [`com.docker.stack.namespace=${appName}`]}}) as Task[];
 
         for (const s of services) {
-            if (s.UpdateStatus?.State) {
+            const runningTasks = tasks.filter((t) => t.Status.State === "running" && t.ServiceID === s.ID);
+            const desiredReplicas = s.Spec?.Mode?.Replicated?.Replicas ?? 0;
+
+            // Always check replica count first - compare running tasks against desired replicas
+            if (runningTasks.length < desiredReplicas) {
+                serviceStateMap.set(s.ID, "replicating");
+            } else if (s.UpdateStatus?.State && !["completed", "rollback_completed"].includes(s.UpdateStatus.State)) {
                 serviceStateMap.set(s.ID, s.UpdateStatus.State);
-            } else {
-                const runningTasks = tasks.filter((t) => t.Status.State === "running" && t.ServiceID === s.ID);
-                const totalTasks = tasks.filter((t) => t.ServiceID === s.ID);
-                if (totalTasks.length > runningTasks.length) {
-                    serviceStateMap.set(s.ID, "replicating");
-                }
             }
         }
 
