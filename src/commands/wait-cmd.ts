@@ -50,15 +50,12 @@ export async function handler (args: ArgumentsCamelCase) {
             // Always check replica count first - compare running tasks against desired replicas
             if (runningTasks.length < desiredReplicas) {
                 serviceStateMap.set(s.ID, "replicating");
-            } else if (s.UpdateStatus?.State && !["completed", "rollback_completed"].includes(s.UpdateStatus.State)) {
+            } else if (s.UpdateStatus?.State && ["updating", "paused", "rollback_started", "rollback_paused"].includes(s.UpdateStatus.State)) {
                 serviceStateMap.set(s.ID, s.UpdateStatus.State);
             }
         }
 
-        const servicesUpdating = [];
-        for (const [id, state] of serviceStateMap) {
-            if (!["completed", "rollback_completed"].includes(state)) servicesUpdating.push([id, state]);
-        }
+        const servicesUpdating = [...serviceStateMap.entries()];
 
         bail = servicesUpdating.length === 0;
         if (!bail) {
