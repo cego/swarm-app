@@ -124,8 +124,8 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                             ports: {
                                 elements: {
                                     properties: {
-                                        published_port: {type: "int16"},
-                                        target_port: {type: "int16"},
+                                        published_port: {type: "uint16"},
+                                        target_port: {type: "uint16"},
                                     },
                                     optionalProperties: {
                                         publish_mode: {enum: ["ingress", "host"]},

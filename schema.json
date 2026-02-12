@@ -107,10 +107,10 @@
                 "elements": {
                   "properties": {
                     "published_port": {
-                      "type": "int16"
+                      "type": "uint16"
                     },
                     "target_port": {
-                      "type": "int16"
+                      "type": "uint16"
                     }
                   },
                   "optionalProperties": {
