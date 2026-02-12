@@ -104,7 +104,7 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                     },
                     replicas: {type: "int32"},
                     stop_signal: {enum: ["SIGTERM", "SIGQUIT"]},
-                    stop_grace_period: {type: "int32"},
+                    stop_grace_period: {type: "float64"},
                     user: {type: "string"},
                     placement: {
                         optionalProperties: {
@@ -138,11 +138,11 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                     health_check: {
                         optionalProperties: {
                             test: {elements: {type: "string"}},
-                            interval: {type: "int32"},
-                            timeout: {type: "int32"},
+                            interval: {type: "float64"},
+                            timeout: {type: "float64"},
                             retries: {type: "int32"},
-                            start_period: {type: "int32"},
-                            start_interval: {type: "int32"},
+                            start_period: {type: "float64"},
+                            start_interval: {type: "float64"},
                         },
                     },
                     dir: {type: "string"},
