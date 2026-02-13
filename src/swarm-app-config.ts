@@ -246,6 +246,15 @@ export async function expandSwarmAppConfig (swarmAppConfig: SwarmAppConfig, appN
         delete s.env_file;
     }
 
+    // Validate health_check test prefix
+    const validTestPrefixes = ["CMD", "CMD-SHELL", "NONE"];
+    for (const [name, s] of Object.entries(swarmAppConfig.service_specs)) {
+        const test = s.health_check?.test;
+        if (test?.[0] && !validTestPrefixes.includes(test[0])) {
+            throw new AssertionError({message: `service_specs.${name}.health_check.test[0] must be one of ${validTestPrefixes.join(", ")}, got "${test[0]}"`});
+        }
+    }
+
     // Ensure com.docker.stack.namespace labels
     for (const s of Object.values(swarmAppConfig.service_specs)) {
         s.service_labels = s.service_labels ?? {};
