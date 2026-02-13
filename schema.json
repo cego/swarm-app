@@ -75,7 +75,7 @@
             ]
           },
           "stop_grace_period": {
-            "type": "int32"
+            "type": "float64"
           },
           "user": {
             "type": "string"
@@ -107,10 +107,10 @@
                 "elements": {
                   "properties": {
                     "published_port": {
-                      "type": "int16"
+                      "type": "uint16"
                     },
                     "target_port": {
-                      "type": "int16"
+                      "type": "uint16"
                     }
                   },
                   "optionalProperties": {
@@ -140,19 +140,19 @@
                 }
               },
               "interval": {
-                "type": "int32"
+                "type": "float64"
               },
               "timeout": {
-                "type": "int32"
+                "type": "float64"
               },
               "retries": {
                 "type": "int32"
               },
               "start_period": {
-                "type": "int32"
+                "type": "float64"
               },
               "start_interval": {
-                "type": "int32"
+                "type": "float64"
               }
             }
           },

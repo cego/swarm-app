@@ -62,11 +62,11 @@ service_specs:
           publish_mode: ingress
     health_check:
       test: ["CMD", "true"]
-      interval: 5000000 # 5s
-      timeout: 5000000 # 5s
+      interval: 5000000000 # 5s (nanoseconds)
+      timeout: 5000000000 # 5s (nanoseconds)
       retries: 3
-      start_period: 5000000 # 5s
-      start_interval: 1000000 # 1s
+      start_period: 5000000000 # 5s (nanoseconds)
+      start_interval: 1000000000 # 1s (nanoseconds)
     mounts:
       /etc/nginx/:
         source: "web-data"
