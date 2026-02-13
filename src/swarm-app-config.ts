@@ -250,7 +250,7 @@ export async function expandSwarmAppConfig (swarmAppConfig: SwarmAppConfig, appN
     const validTestPrefixes = ["CMD", "CMD-SHELL", "NONE"];
     for (const [name, s] of Object.entries(swarmAppConfig.service_specs)) {
         const test = s.health_check?.test;
-        if (test && test[0] && !validTestPrefixes.includes(test[0])) {
+        if (test?.[0] && !validTestPrefixes.includes(test[0])) {
             throw new AssertionError({message: `service_specs.${name}.health_check.test[0] must be one of ${validTestPrefixes.join(", ")}, got "${test[0]}"`});
         }
     }
