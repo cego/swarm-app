@@ -124,11 +124,11 @@ export async function upsertServices ({dockerode, config, current, appName, hash
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
-            await dockerode.createService({...serviceSpec, authconfig: authconfig});
+            await dockerode.createService({...serviceSpec, authconfig});
         } else {
             serviceSpec.version = foundService.Version?.Index ?? 0;
             console.log(`Updating service ${appName}_${serviceName}`);
-            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig: authconfig});
+            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig});
         }
     }
 }
