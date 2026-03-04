@@ -2,23 +2,29 @@ import fs from "fs";
 import path from "path";
 import {AuthConfig} from "dockerode";
 
-export async function loadAuthConfig (): Promise<AuthConfig | undefined> {
+export type DockerAuths = Record<string, {auth?: string}>;
+
+export async function loadDockerAuths (): Promise<DockerAuths> {
     const configDir = process.env.DOCKER_CONFIG ?? path.join(process.env.HOME ?? "~", ".docker");
     const configPath = path.join(configDir, "config.json");
 
-    let content: string;
     try {
-        content = await fs.promises.readFile(configPath, "utf-8");
+        const content = await fs.promises.readFile(configPath, "utf-8");
+        const config = JSON.parse(content) as {auths?: DockerAuths};
+        return config.auths ?? {};
     } catch {
-        return undefined;
+        return {};
     }
+}
 
-    const config = JSON.parse(content) as {auths?: Record<string, {auth?: string}>};
-    const firstEntry = Object.entries(config.auths ?? {}).find(([, v]) => v.auth);
-    if (!firstEntry) return undefined;
+export function resolveAuthConfig (image: string, auths: DockerAuths): AuthConfig | undefined {
+    const parts = image.split("/");
+    const first = parts[0];
+    const registry = parts.length >= 2 && first && (first.includes(".") || first.includes(":")) ? first : "https://index.docker.io/v1/";
 
-    const [serveraddress, entry] = firstEntry;
-    if (!entry.auth) return undefined;
+    const entry = auths[registry];
+    if (!entry?.auth) return undefined;
+
     const decoded = Buffer.from(entry.auth, "base64").toString("utf-8");
     const separatorIndex = decoded.indexOf(":");
     if (separatorIndex === -1) return undefined;
@@ -26,6 +32,6 @@ export async function loadAuthConfig (): Promise<AuthConfig | undefined> {
     return {
         username: decoded.substring(0, separatorIndex),
         password: decoded.substring(separatorIndex + 1),
-        serveraddress,
+        serveraddress: registry,
     };
 }
