@@ -3,6 +3,8 @@ import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
 import {SwarmAppConfig} from "./swarm-app-config.js";
+import {resolveAuthConfig} from "./docker-config.js";
+import {AuthConfigObject} from "dockerode";
 import timers from "timers/promises";
 import assert from "assert";
 
@@ -116,18 +118,21 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
+    dockerAuths?: Record<string, AuthConfigObject> | undefined;
 }
-export async function upsertServices ({dockerode, config, current, appName, hashedConfigs}: UpsertServicesOpts) {
+export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, dockerAuths}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
         const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
+        const image = config.service_specs[serviceName]?.image;
+        const authconfig = image && dockerAuths ? resolveAuthConfig(image, dockerAuths) : undefined;
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
-            await dockerode.createService(serviceSpec);
+            await dockerode.createService({...serviceSpec, authconfig});
         } else {
             serviceSpec.version = foundService.Version?.Index ?? 0;
             console.log(`Updating service ${appName}_${serviceName}`);
-            await dockerode.getService(foundService.ID).update(serviceSpec);
+            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig});
         }
     }
 }
