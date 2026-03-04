@@ -25,13 +25,5 @@ export function resolveAuthConfig (image: string, auths: DockerAuths): AuthConfi
     const entry = auths[registry];
     if (!entry?.auth) return undefined;
 
-    const decoded = Buffer.from(entry.auth, "base64").toString("utf-8");
-    const separatorIndex = decoded.indexOf(":");
-    if (separatorIndex === -1) return undefined;
-
-    return {
-        username: decoded.substring(0, separatorIndex),
-        password: decoded.substring(separatorIndex + 1),
-        serveraddress: registry,
-    };
+    return {auth: entry.auth, serveraddress: registry};
 }
