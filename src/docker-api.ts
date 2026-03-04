@@ -1,10 +1,9 @@
-import Dockerode, {ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
+import Dockerode, {AuthConfigObject, ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
 import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
 import {SwarmAppConfig} from "./swarm-app-config.js";
 import {resolveAuthConfig} from "./docker-config.js";
-import {AuthConfigObject} from "dockerode";
 import timers from "timers/promises";
 import assert from "assert";
 
@@ -128,7 +127,11 @@ export async function upsertServices ({dockerode, config, current, appName, hash
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
-            await dockerode.createService({...serviceSpec, authconfig});
+            if (authconfig) {
+                await dockerode.createService(authconfig, serviceSpec);
+            } else {
+                await dockerode.createService(serviceSpec);
+            }
         } else {
             serviceSpec.version = foundService.Version?.Index ?? 0;
             console.log(`Updating service ${appName}_${serviceName}`);
