@@ -23,5 +23,11 @@ export function resolveAuthConfig (image: string, auths: Record<string, AuthConf
     const entry = auths[registry];
     if (!entry?.auth) return undefined;
 
-    return {auth: entry.auth, serveraddress: registry};
+    const decoded = Buffer.from(entry.auth, "base64").toString();
+    const separatorIndex = decoded.indexOf(":");
+    if (separatorIndex === -1) return undefined;
+    const username = decoded.substring(0, separatorIndex);
+    const password = decoded.substring(separatorIndex + 1);
+
+    return {username, password, serveraddress: registry};
 }
