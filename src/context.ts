@@ -4,7 +4,7 @@ import Dockerode from "dockerode";
 import {getCurrent} from "./docker-api.js";
 import {initHashedConfigs} from "./hashed-config.js";
 import {ArgumentsCamelCase} from "yargs";
-import {loadDockerConfig} from "./docker-config.js";
+import {loadAuthConfig} from "./docker-config.js";
 
 
 export async function initContext (args: ArgumentsCamelCase) {
@@ -25,7 +25,7 @@ export async function initContext (args: ArgumentsCamelCase) {
 
     const hashedConfigs = await initHashedConfigs(config);
 
-    const dockerConfig = await loadDockerConfig();
+    const authconfig = await loadAuthConfig();
 
-    return {appName, config, dockerode, current, hashedConfigs, dockerConfig};
+    return {appName, config, dockerode, current, hashedConfigs, authconfig};
 }

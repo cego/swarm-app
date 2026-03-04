@@ -1,9 +1,8 @@
-import Dockerode, {ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
+import Dockerode, {AuthConfig, ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
 import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
 import {SwarmAppConfig} from "./swarm-app-config.js";
-import {DockerConfigFile, getAuthForImage} from "./docker-config.js";
 import timers from "timers/promises";
 import assert from "assert";
 
@@ -117,21 +116,19 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
-    dockerConfig?: DockerConfigFile;
+    authconfig?: AuthConfig | undefined;
 }
-export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, dockerConfig}: UpsertServicesOpts) {
+export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, authconfig}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
         const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
-        const image = config.service_specs[serviceName]?.image;
-        const authconfig = image && dockerConfig ? getAuthForImage(image, dockerConfig) : undefined;
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
-            await dockerode.createService({...serviceSpec, authconfig});
+            await dockerode.createService({...serviceSpec, authconfig: authconfig});
         } else {
             serviceSpec.version = foundService.Version?.Index ?? 0;
             console.log(`Updating service ${appName}_${serviceName}`);
-            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig});
+            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig: authconfig});
         }
     }
 }
