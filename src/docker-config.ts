@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import {AuthConfig} from "dockerode";
+import {AuthConfig, AuthConfigObject} from "dockerode";
 
-export type DockerAuths = Record<string, {auth?: string}>;
+export type DockerAuths = Record<string, AuthConfigObject>;
 
 export async function loadDockerAuths (): Promise<DockerAuths> {
     const configDir = process.env.DOCKER_CONFIG ?? path.join(process.env.HOME ?? "~", ".docker");
