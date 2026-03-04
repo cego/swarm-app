@@ -1,4 +1,4 @@
-import Dockerode, {ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
+import Dockerode, {AuthConfig, ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
 import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
@@ -116,18 +116,21 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
+    getAuthForImage?: (image: string) => AuthConfig | undefined;
 }
-export async function upsertServices ({dockerode, config, current, appName, hashedConfigs}: UpsertServicesOpts) {
+export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, getAuthForImage}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
         const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
+        const image = config.service_specs[serviceName]?.image;
+        const authconfig = image ? getAuthForImage?.(image) : undefined;
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
-            await dockerode.createService(serviceSpec);
+            await dockerode.createService({...serviceSpec, authconfig});
         } else {
             serviceSpec.version = foundService.Version?.Index ?? 0;
             console.log(`Updating service ${appName}_${serviceName}`);
-            await dockerode.getService(foundService.ID).update(serviceSpec);
+            await dockerode.getService(foundService.ID).update({...serviceSpec, authconfig});
         }
     }
 }
