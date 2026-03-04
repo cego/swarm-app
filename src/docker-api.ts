@@ -3,7 +3,8 @@ import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
 import {SwarmAppConfig} from "./swarm-app-config.js";
-import {DockerAuths, resolveAuthConfig} from "./docker-config.js";
+import {resolveAuthConfig} from "./docker-config.js";
+import {AuthConfigObject} from "dockerode";
 import timers from "timers/promises";
 import assert from "assert";
 
@@ -117,7 +118,7 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
-    dockerAuths?: DockerAuths | undefined;
+    dockerAuths?: Record<string, AuthConfigObject> | undefined;
 }
 export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, dockerAuths}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
