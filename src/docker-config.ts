@@ -4,7 +4,7 @@ import {AuthConfig} from "dockerode";
 
 type DockerConfigAuths = Record<string, {auth?: string}>;
 
-interface DockerConfigFile {
+export interface DockerConfigFile {
     auths?: DockerConfigAuths;
 }
 

@@ -1,8 +1,9 @@
-import Dockerode, {AuthConfig, ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
+import Dockerode, {ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
 import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
 import {SwarmAppConfig} from "./swarm-app-config.js";
+import {DockerConfigFile, getAuthForImage} from "./docker-config.js";
 import timers from "timers/promises";
 import assert from "assert";
 
@@ -116,13 +117,13 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
-    getAuthForImage?: (image: string) => AuthConfig | undefined;
+    dockerConfig?: DockerConfigFile;
 }
-export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, getAuthForImage}: UpsertServicesOpts) {
+export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, dockerConfig}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
         const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
         const image = config.service_specs[serviceName]?.image;
-        const authconfig = image ? getAuthForImage?.(image) : undefined;
+        const authconfig = image && dockerConfig ? getAuthForImage(image, dockerConfig) : undefined;
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);
         if (!foundService) {
             console.log(`Creating service ${appName}_${serviceName}`);
