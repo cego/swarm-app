@@ -20,7 +20,7 @@
   "devDependencies": {
     "@jest/globals": "30.x",
     "@stylistic/eslint-plugin": "^5.5.0",
-    "@types/dockerode": "3.x",
+    "@types/dockerode": "4.x",
     "@types/js-yaml": "4.x",
     "@types/node": "24.x",
     "@types/nunjucks": "^3.2.6",
