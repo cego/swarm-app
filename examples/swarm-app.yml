@@ -21,6 +21,7 @@ service_specs:
   # {% endif %}
 
   nginx:
+    entrypoint: ["/docker-entrypoint.sh"]
     command: ["nginx", "-g", "daemon off;"]
     image: {{ env.NGINX_IMAGE_REF }}
     container_labels:
