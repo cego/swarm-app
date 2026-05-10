@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "moduleResolution": "node",
-    "module": "ESNext",
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSourceMap": true,
@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "exactOptionalPropertyTypes": true
+    "exactOptionalPropertyTypes": true,
+    "isolatedModules": true
   }
 }
