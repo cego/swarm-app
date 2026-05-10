@@ -57,7 +57,7 @@ export interface SwarmAppServiceConfig {
     mounts?: Record<string, {
         source: string;
         type: "bind" | "volume";
-        readonly: boolean;
+        read_only: boolean;
     }>;
     update_config?: {
         parallelism: number;
@@ -151,7 +151,7 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                             properties: {
                                 source: {type: "string"},
                                 type: {enum: ["volume", "bind"]},
-                                readonly: {type: "boolean"},
+                                read_only: {type: "boolean"},
                             },
                         },
                     },

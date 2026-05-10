@@ -47,7 +47,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
     if (byServiceName.length > 0) {
         configs = byServiceName.map(({targetPath, hash}) => {
             return {
-                File: {Name: targetPath, UID: "0", GID: "0", Mode: 0},
+                File: {Name: targetPath, UID: "0", GID: "0", Mode: 0o444},
                 ConfigID: current?.configs.find((c) => c.Spec?.Name === hash)?.ID,
                 ConfigName: hash,
             };
@@ -94,7 +94,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                         Target: t,
                         Source: m.source,
                         Type: m.type,
-                        ReadOnly: m.readonly,
+                        ReadOnly: m.read_only,
                     };
                 }),
             },
