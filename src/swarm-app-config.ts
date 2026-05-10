@@ -3,7 +3,7 @@ import fs from "fs";
 import {AssertionError} from "assert";
 import nunjucks from "nunjucks";
 import {JTDSchemaType} from "ajv/dist/types/jtd-schema.js";
-import Ajv from "ajv/dist/jtd.js";
+import {Ajv} from "ajv/dist/jtd.js";
 import {assertObjectOrNull} from "./asserts.js";
 
 export interface SwarmAppNetworkConfig {
@@ -180,7 +180,7 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
     },
 };
 
-export async function loadSwarmAppConfig (configFile: string, throwOnUndefined: boolean, injectHostEnv: boolean | null = true, templatingInputFile: string | null) {
+export async function loadSwarmAppConfig (configFile: string, throwOnUndefined: boolean, injectHostEnv: boolean | null = true, templatingInputFile: string | null): Promise<SwarmAppConfig> {
     const nunjucksEnv = new nunjucks.Environment(null, {throwOnUndefined});
     const nunjucksEnvInput = injectHostEnv ? {env: process.env} : {};
     const templatingInput = yaml.load(templatingInputFile ? await fs.promises.readFile(templatingInputFile, "utf8") : "---");
