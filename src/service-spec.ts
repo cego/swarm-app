@@ -72,7 +72,8 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
             ContainerSpec: {
                 Image: serviceConfig.image,
                 Labels: serviceConfig.container_labels,
-                Command: serviceConfig.command,
+                Command: serviceConfig.entrypoint,
+                Args: serviceConfig.command,
                 Env: env,
                 StopSignal: serviceConfig.stop_signal,
                 StopGracePeriod: serviceConfig.stop_grace_period,
