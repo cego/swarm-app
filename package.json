@@ -18,6 +18,7 @@
     "yargs": "18.x"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@jest/globals": "30.x",
     "@stylistic/eslint-plugin": "^5.5.0",
     "@types/dockerode": "4.x",
@@ -28,7 +29,7 @@
     "@types/traverse": "0.6.x",
     "@typescript-eslint/eslint-plugin": "8.x",
     "@typescript-eslint/parser": "8.x",
-    "eslint": "9.x",
+    "eslint": "10.x",
     "jest": "30.x",
     "jiti": "^2.6.1",
     "ts-jest": "29.x",

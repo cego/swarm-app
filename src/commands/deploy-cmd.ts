@@ -26,7 +26,7 @@ export async function handler (args: ArgumentsCamelCase) {
     await removeUnusedConfigs(ctx);
 
     let services;
-    let updateStatusesDone = false;
+    let updateStatusesDone;
     do {
         services = await dockerode.listServices({filters: {label: [`com.docker.stack.namespace=${appName}`]}});
         updateStatusesDone = services.every((s) => {
