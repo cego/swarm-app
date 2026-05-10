@@ -46,7 +46,7 @@ service_specs:
       - shared
     replicas: 2
     stop_signal: SIGQUIT
-    stop_grace_period: 10
+    stop_grace_period: 10000000000 # 10s (nanoseconds)
     user: '0'
     dir: /etc/nginx
     placement:
@@ -72,4 +72,4 @@ service_specs:
       /etc/nginx/:
         source: "web-data"
         type: "volume" # "bind|volume"
-        readonly: true
+        read_only: true
