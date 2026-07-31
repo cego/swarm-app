@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "ajv": "8.x",
-    "dockerode": "4.x",
+    "dockerode": "5.x",
     "jest-diff": "30.x",
     "js-yaml": "4.x",
     "nunjucks": "^3.2.4",
