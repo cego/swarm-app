@@ -26,18 +26,13 @@ export async function handler (args: ArgumentsCamelCase) {
     assertNumber(timeout, "timeout must be a number in ms");
     const interval = args.interval;
     assertNumber(interval, "interval must be a number in ms");
-    const stableChecks = args.stableChecks;
-    assertNumber(stableChecks, "stableChecks must be a number");
 
     const dockerode = new Docker();
 
     console.log(`Awaiting task reconciliation for ${timeout}ms`);
 
-    let services: Service[], tasks: Task[], timedout, bail, serviceStateMap;
-    let stableStreak = 0;
-    const seenFailedTaskIds = new Set<string>();
-    const restartCooldown = new Map<string, number>();
-    let firstCheck = true;
+    const reportedStates = new Map<string, string>();
+    let services: Service[], tasks: Task[], timedout, settled, unrecoverable;
     const start = Date.now();
     do {
         // To prevent high cpu usage
@@ -45,57 +40,38 @@ export async function handler (args: ArgumentsCamelCase) {
         // Calculate timedout
         timedout = Date.now() - timeout > start;
 
-        serviceStateMap = new Map<string, string>();
         services = await dockerode.listServices({filters: {label: [`com.docker.stack.namespace=${appName}`]}});
         tasks = await dockerode.listTasks({filters: {"label": [`com.docker.stack.namespace=${appName}`]}}) as Task[];
 
+        settled = true;
+        unrecoverable = false;
         for (const s of services) {
+            const serviceName = s.Spec?.Name;
+            assert(serviceName != null, "serviceName must be a string");
+            const updateState = s.UpdateStatus?.State ?? "deployed";
+            const stalled = updateState === "paused" || updateState.startsWith("rollback_");
             const runningTasks = tasks.filter((t) => t.Status.State === "running" && t.ServiceID === s.ID);
             const desiredReplicas = s.Spec?.Mode?.Replicated?.Replicas ?? 0;
+            const state = !stalled && runningTasks.length < desiredReplicas ? `replicating ${runningTasks.length}/${desiredReplicas}` : updateState;
 
-            // Always check replica count first - compare running tasks against desired replicas
-            if (runningTasks.length < desiredReplicas) {
-                serviceStateMap.set(s.ID, "replicating");
-            } else if (s.UpdateStatus?.State && ["updating", "paused", "rollback_started", "rollback_paused"].includes(s.UpdateStatus.State)) {
-                serviceStateMap.set(s.ID, s.UpdateStatus.State);
-            }
-        }
-
-        for (const t of tasks) {
-            if (!["failed", "rejected"].includes(t.Status.State) || seenFailedTaskIds.has(t.ID)) {
-                continue;
-            }
-            seenFailedTaskIds.add(t.ID);
-            if (!firstCheck) {
-                restartCooldown.set(t.ServiceID, stableChecks);
-            }
-        }
-        firstCheck = false;
-
-        for (const [serviceId, remaining] of restartCooldown) {
-            serviceStateMap.set(serviceId, "restarting");
-            restartCooldown.set(serviceId, remaining - 1);
-            if (remaining - 1 <= 0) {
-                restartCooldown.delete(serviceId);
-            }
-        }
-
-        const servicesUpdating = [...serviceStateMap.entries()];
-
-        if (servicesUpdating.length === 0) {
-            stableStreak++;
-        } else {
-            stableStreak = 0;
-            for (const [serviceId, state] of servicesUpdating) {
-                const serviceName = services.find((s) => s.ID === serviceId)?.Spec?.Name;
-                assert(serviceName != null, "serviceName must be a string");
-                const errMsg = tasks.find((t) => t.ServiceID === serviceId && t.Status.Err)?.Status.Err;
+            if (reportedStates.get(s.ID) !== state) {
+                const errMsg = tasks.find((t) => t.ServiceID === s.ID && t.Status.Err)?.Status.Err;
                 console.log(`${serviceName} is in ${state} state${errMsg ? ", error: '" + errMsg + "'" : ""}`);
+                reportedStates.set(s.ID, state);
+            }
+
+            if (stalled) {
+                unrecoverable = true;
+            } else if (!["deployed", "completed"].includes(state)) {
+                settled = false;
             }
         }
+    } while (!timedout && !unrecoverable && !settled);
 
-        bail = stableStreak >= stableChecks;
-    } while (!timedout && !bail);
+    if (unrecoverable) {
+        console.error("This deployment will not complete");
+        process.exit(1);
+    }
 
     if (timedout) {
         console.error("Reconciliation timed out");
@@ -116,11 +92,6 @@ export function builder (yargs: Argv) {
         type: "number",
         description: "How often reconciliation should run",
         default: 5000,
-    });
-    yargs.positional("stableChecks", {
-        type: "number",
-        description: "Consecutive settled checks required before success",
-        default: 3,
     });
     yargs.hide("help");
     yargs.hide("version");
