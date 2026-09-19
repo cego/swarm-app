@@ -63,6 +63,16 @@ export interface SwarmAppServiceConfig {
         parallelism: number;
         order: "stop-first" | "start-first";
     };
+    resources?: {
+        limits?: {
+            nano_cpus?: number;
+            memory_bytes?: number;
+        };
+        reservations?: {
+            nano_cpus?: number;
+            memory_bytes?: number;
+        };
+    };
 }
 
 export interface SwarmAppConfig {
@@ -159,6 +169,22 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                         properties: {
                             parallelism: {type: "int32"},
                             order: {enum: ["stop-first", "start-first"]},
+                        },
+                    },
+                    resources: {
+                        optionalProperties: {
+                            limits: {
+                                optionalProperties: {
+                                    nano_cpus: {type: "float64"},
+                                    memory_bytes: {type: "float64"},
+                                },
+                            },
+                            reservations: {
+                                optionalProperties: {
+                                    nano_cpus: {type: "float64"},
+                                    memory_bytes: {type: "float64"},
+                                },
+                            },
                         },
                     },
                 },

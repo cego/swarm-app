@@ -54,6 +54,20 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
         });
     }
 
+    let resources;
+    if (serviceConfig.resources) {
+        resources = {
+            Limits: serviceConfig.resources.limits && {
+                NanoCPUs: serviceConfig.resources.limits.nano_cpus,
+                MemoryBytes: serviceConfig.resources.limits.memory_bytes,
+            },
+            Reservations: serviceConfig.resources.reservations && {
+                NanoCPUs: serviceConfig.resources.reservations.nano_cpus,
+                MemoryBytes: serviceConfig.resources.reservations.memory_bytes,
+            },
+        };
+    }
+
     let updateConfig;
     if (serviceConfig.update_config) {
         updateConfig = {
@@ -114,6 +128,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
             }),
             ForceUpdate: 0,
             Runtime: "container",
+            Resources: resources,
         },
         Mode: {Replicated: {Replicas: serviceConfig.replicas ?? 1}},
         UpdateConfig: updateConfig,
