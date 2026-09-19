@@ -45,6 +45,12 @@ service_specs:
       - default
       - shared
     replicas: 2
+    resources:
+      limits:
+        nano_cpus: 500000000 # 0.5 cpu
+        memory_bytes: 134217728 # 128 MiB
+      reservations:
+        memory_bytes: 67108864 # 64 MiB
     stop_signal: SIGQUIT
     stop_grace_period: 10000000000 # 10s (nanoseconds)
     user: '0'

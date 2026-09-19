@@ -189,6 +189,30 @@
                 ]
               }
             }
+          },
+          "resources": {
+            "optionalProperties": {
+              "limits": {
+                "optionalProperties": {
+                  "nano_cpus": {
+                    "type": "float64"
+                  },
+                  "memory_bytes": {
+                    "type": "float64"
+                  }
+                }
+              },
+              "reservations": {
+                "optionalProperties": {
+                  "nano_cpus": {
+                    "type": "float64"
+                  },
+                  "memory_bytes": {
+                    "type": "float64"
+                  }
+                }
+              }
+            }
           }
         }
       }
