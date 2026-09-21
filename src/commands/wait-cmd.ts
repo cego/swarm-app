@@ -55,7 +55,7 @@ export async function handler (args: ArgumentsCamelCase) {
             const state = !stalled && runningTasks.length < desiredReplicas ? `replicating ${runningTasks.length}/${desiredReplicas}` : updateState;
 
             if (reportedStates.get(s.ID) !== state) {
-                const errMsg = tasks.find((t) => t.ServiceID === s.ID && t.Status.Err)?.Status.Err;
+                const errMsg = tasks.find((t) => t.ServiceID === s.ID && t.DesiredState === "running" && t.Status.Err)?.Status.Err;
                 console.log(`${serviceName} is in ${state} state${errMsg ? ", error: '" + errMsg + "'" : ""}`);
                 reportedStates.set(s.ID, state);
             }
