@@ -1,5 +1,5 @@
 import {ArgumentsCamelCase, Argv} from "yargs";
-import {createMissingConfigs, createMissingNetworks, removeUnusedConfigs, removeUnusedServices, upsertServices} from "../docker-api.js";
+import {createMissingConfigs, createMissingNetworks, createMissingSecrets, removeUnusedConfigs, removeUnusedSecrets, removeUnusedServices, upsertServices} from "../docker-api.js";
 import {initContext} from "../context.js";
 import timers from "timers/promises";
 import yargsExtra from "../yargs-extra.js";
@@ -20,10 +20,15 @@ export async function handler (args: ArgumentsCamelCase) {
     for (const c of addedConfigs) {
         ctx.current.configs.push(c);
     }
+    const addedSecrets = await createMissingSecrets(ctx);
+    for (const s of addedSecrets) {
+        ctx.current.secrets.push(s);
+    }
     await upsertServices(ctx);
 
     await removeUnusedServices(ctx);
     await removeUnusedConfigs(ctx);
+    await removeUnusedSecrets(ctx);
 
     let services;
     let updateStatusesDone;

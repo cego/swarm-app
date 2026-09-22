@@ -1,4 +1,4 @@
-import Dockerode, {AuthConfigObject, ConfigInfo, NetworkInspectInfo, Service} from "dockerode";
+import Dockerode, {AuthConfigObject, ConfigInfo, NetworkInspectInfo, SecretSpec, Service} from "dockerode";
 import {initServiceSpec, sortServiceSpec} from "./service-spec.js";
 import {HashedConfigs} from "./hashed-config.js";
 import {assertString} from "./asserts.js";
@@ -9,15 +9,22 @@ import assert from "assert";
 
 export type NetworkInspectInfoPlus = NetworkInspectInfo & {EnableIPv4: boolean};
 
+export interface SecretInfo {
+    ID: string;
+    Spec?: SecretSpec | undefined;
+}
+
 export interface DockerResources {
     services: Service[];
     configs: ConfigInfo[];
+    secrets: SecretInfo[];
     networks: NetworkInspectInfoPlus[];
 }
 
 export async function getCurrent ({dockerode, appName}: {dockerode: Dockerode; appName: string}): Promise<DockerResources> {
     const resources = {
         configs: await dockerode.listConfigs({filters: {label: [`com.docker.stack.namespace=${appName}`]}}),
+        secrets: await dockerode.listSecrets({filters: {label: [`com.docker.stack.namespace=${appName}`]}}),
         services: await dockerode.listServices({filters: {label: [`com.docker.stack.namespace=${appName}`]}}),
         networks: await dockerode.listNetworks() as NetworkInspectInfoPlus[],
     };
@@ -49,6 +56,30 @@ export async function createMissingConfigs ({dockerode, hashedConfigs, appName, 
         newConfigs.push({ID: id, Spec: spec, CreatedAt: "", UpdatedAt: "", Version: {Index: 0}});
     }
     return newConfigs;
+}
+
+interface CreateMissingSecretsOpts {
+    dockerode: Dockerode;
+    hashedSecrets: HashedConfigs;
+    current: DockerResources;
+    appName: string;
+}
+export async function createMissingSecrets ({dockerode, hashedSecrets, appName, current}: CreateMissingSecretsOpts): Promise<SecretInfo[]> {
+    const newSecrets: SecretInfo[] = [];
+    for (const h of hashedSecrets.unique()) {
+        const found = current.secrets.find((c) => c.Spec?.Name === h.hash);
+        if (found) continue;
+        console.log(`Creating secret with hash ${h.hash}`);
+        const spec = {
+            Name: h.hash,
+            Labels: {"com.docker.stack.namespace": appName},
+            Data: Buffer.from(h.content).toString("base64"),
+        };
+        const {id} = await dockerode.createSecret(spec) as {id: number}; // TODO: Add fix to @types/dockerode
+        assertString(id, `id:${id} is not a string in createMissingSecrets`);
+        newSecrets.push({ID: id, Spec: spec});
+    }
+    return newSecrets;
 }
 
 interface CreateMissingNetworksOpts {
@@ -94,6 +125,20 @@ export async function removeUnusedConfigs ({dockerode, current, hashedConfigs}: 
     }
 }
 
+interface RemoveUnusedSecretsOpts {
+    dockerode: Dockerode;
+    current: DockerResources;
+    hashedSecrets: HashedConfigs;
+}
+export async function removeUnusedSecrets ({dockerode, current, hashedSecrets}: RemoveUnusedSecretsOpts) {
+    for (const c of current.secrets) {
+        if (!c.Spec?.Name) continue;
+        if (hashedSecrets.exists(c.Spec.Name)) continue;
+        await dockerode.getSecret(c.ID).remove();
+        await timers.setTimeout(0);
+    }
+}
+
 interface RemoveUnusedServicesOpts {
     dockerode: Dockerode;
     current: DockerResources;
@@ -117,11 +162,12 @@ interface UpsertServicesOpts {
     current: DockerResources;
     appName: string;
     hashedConfigs: HashedConfigs;
+    hashedSecrets: HashedConfigs;
     dockerAuths?: Record<string, AuthConfigObject> | undefined;
 }
-export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, dockerAuths}: UpsertServicesOpts) {
+export async function upsertServices ({dockerode, config, current, appName, hashedConfigs, hashedSecrets, dockerAuths}: UpsertServicesOpts) {
     for (const serviceName of Object.keys(config.service_specs)) {
-        const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
+        const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, hashedSecrets, current});
         const image = config.service_specs[serviceName]?.image;
         const authconfig = image && dockerAuths ? resolveAuthConfig(image, dockerAuths) : undefined;
         const foundService = current.services.find((s) => s.Spec?.Name === `${appName}_${serviceName}`);

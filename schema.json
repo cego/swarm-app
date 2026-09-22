@@ -52,6 +52,18 @@
               }
             }
           },
+          "secrets": {
+            "values": {
+              "optionalProperties": {
+                "source_file": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "environment": {
             "values": {
               "type": "string"

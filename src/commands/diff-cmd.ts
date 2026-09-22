@@ -49,12 +49,13 @@ interface InitServiceResourcesOpt {
     appName: string;
     config: SwarmAppConfig;
     hashedConfigs: HashedConfigs;
+    hashedSecrets: HashedConfigs;
     current: DockerResources;
 }
-function initServiceResources ({appName, config, hashedConfigs, current}: InitServiceResourcesOpt): ServiceSpec[] {
+function initServiceResources ({appName, config, hashedConfigs, hashedSecrets, current}: InitServiceResourcesOpt): ServiceSpec[] {
     const serviceSpecs: ServiceSpec[] = [];
     for (const serviceName of Object.keys(config.service_specs)) {
-        const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, current});
+        const serviceSpec = initServiceSpec({appName, serviceName, config, hashedConfigs, hashedSecrets, current});
         delete serviceSpec.version;
         serviceSpecs.push(serviceSpec);
     }
@@ -84,6 +85,10 @@ function deleteIrrelevantNetworkFields (entry: DiffEntry) {
         // Delete config id, we don't care about it
         for (const c of s.TaskTemplate.ContainerSpec.Configs ?? []) {
             delete c.ConfigID;
+        }
+        // Delete secret id, we don't care about it
+        for (const c of s.TaskTemplate.ContainerSpec.Secrets ?? []) {
+            delete c.SecretID;
         }
     }
 }

@@ -23,6 +23,11 @@ export function sortServiceSpec (s: ServiceSpec | undefined) {
         if (!b.File?.Name) return 0;
         return a.File.Name.localeCompare(b.File.Name);
     });
+    s.TaskTemplate.ContainerSpec.Secrets?.sort((a, b) => {
+        if (!a.File?.Name) return 0;
+        if (!b.File?.Name) return 0;
+        return a.File.Name.localeCompare(b.File.Name);
+    });
 }
 
 interface InitServiceSpecOpts {
@@ -30,10 +35,11 @@ interface InitServiceSpecOpts {
     serviceName: string;
     config: SwarmAppConfig;
     hashedConfigs: HashedConfigs;
+    hashedSecrets: HashedConfigs;
     current?: DockerResources;
 }
 
-export function initServiceSpec ({appName, serviceName, config, hashedConfigs, current}: InitServiceSpecOpts): ServiceSpec & {version?: number} {
+export function initServiceSpec ({appName, serviceName, config, hashedConfigs, hashedSecrets, current}: InitServiceSpecOpts): ServiceSpec & {version?: number} {
     assert(config.service_specs[serviceName], "config.service_specs[serviceName] must be non-null");
     const serviceConfig = config.service_specs[serviceName];
 
@@ -50,6 +56,18 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                 File: {Name: targetPath, UID: "0", GID: "0", Mode: 0o444},
                 ConfigID: current?.configs.find((c) => c.Spec?.Name === hash)?.ID,
                 ConfigName: hash,
+            };
+        });
+    }
+
+    let secrets;
+    const secretsByServiceName = hashedSecrets.filterByServiceName(serviceName);
+    if (secretsByServiceName.length > 0) {
+        secrets = secretsByServiceName.map(({targetPath, hash}) => {
+            return {
+                File: {Name: targetPath, UID: "0", GID: "0", Mode: 0o444},
+                SecretID: current?.secrets.find((c) => c.Spec?.Name === hash)?.ID,
+                SecretName: hash,
             };
         });
     }
@@ -93,6 +111,7 @@ export function initServiceSpec ({appName, serviceName, config, hashedConfigs, c
                 StopGracePeriod: serviceConfig.stop_grace_period,
                 User: serviceConfig.user,
                 Configs: configs,
+                Secrets: secrets,
                 Isolation: "default",
                 Dir: serviceConfig.dir,
                 HealthCheck: {
