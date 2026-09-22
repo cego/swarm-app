@@ -30,6 +30,10 @@ export interface SwarmAppServiceConfig {
         source_file?: string;
         content?: string;
     }>;
+    secrets?: Record<string, {
+        source_file?: string;
+        content?: string;
+    }>;
     environment?: Record<string, string>;
     env_file?: string;
     networks?: string[];
@@ -100,6 +104,14 @@ export const swarmAppConfigSchema: JTDSchemaType<SwarmAppConfig> = {
                     entrypoint: {elements: {type: "string"}},
                     container_labels: {values: {type: "string"}},
                     configs: {
+                        values: {
+                            optionalProperties: {
+                                source_file: {type: "string"},
+                                content: {type: "string"},
+                            },
+                        },
+                    },
+                    secrets: {
                         values: {
                             optionalProperties: {
                                 source_file: {type: "string"},

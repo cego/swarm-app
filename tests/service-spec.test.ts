@@ -1,6 +1,6 @@
 import {test, expect} from "@jest/globals";
 import {initServiceSpec} from "../src/service-spec.js";
-import {HashedConfigs} from "../src/hashed-config.js";
+import {HashedConfig, HashedConfigs, initHashedSecrets} from "../src/hashed-config.js";
 import {SwarmAppConfig} from "../src/swarm-app-config.js";
 import {assertTaskTemplateContainerTaskSpec} from "../src/asserts.js";
 
@@ -25,6 +25,7 @@ test("command maps to Args and entrypoint maps to Command", () => {
         serviceName: "server",
         config,
         hashedConfigs: new HashedConfigs(),
+        hashedSecrets: new HashedConfigs(),
     });
 
     assertTaskTemplateContainerTaskSpec(spec);
@@ -52,6 +53,7 @@ test("command without entrypoint sets Args only", () => {
         serviceName: "server",
         config,
         hashedConfigs: new HashedConfigs(),
+        hashedSecrets: new HashedConfigs(),
     });
 
     assertTaskTemplateContainerTaskSpec(spec);
@@ -82,6 +84,7 @@ test("resources map to TaskTemplate.Resources", () => {
         serviceName: "server",
         config,
         hashedConfigs: new HashedConfigs(),
+        hashedSecrets: new HashedConfigs(),
     });
 
     assertTaskTemplateContainerTaskSpec(spec);
@@ -89,4 +92,38 @@ test("resources map to TaskTemplate.Resources", () => {
         Limits: {NanoCPUs: 500000000, MemoryBytes: 134217728},
         Reservations: {MemoryBytes: 67108864},
     });
+});
+
+test("secrets map to hashed ContainerSpec.Secrets", async () => {
+    const config: SwarmAppConfig = {
+        networks: {
+            default: {name: "test-network", external: true},
+        },
+        service_specs: {
+            server: {
+                image: "nginx:latest",
+                secrets: {
+                    "/run/secrets/api_key": {content: "s3cr3t"},
+                },
+                service_labels: {"com.docker.stack.namespace": "test"},
+                container_labels: {"com.docker.stack.namespace": "test"},
+            },
+        },
+    };
+
+    const spec = initServiceSpec({
+        appName: "test",
+        serviceName: "server",
+        config,
+        hashedConfigs: new HashedConfigs(),
+        hashedSecrets: await initHashedSecrets(config),
+    });
+
+    assertTaskTemplateContainerTaskSpec(spec);
+    expect(spec.TaskTemplate.ContainerSpec.Secrets).toEqual([
+        {
+            File: {Name: "/run/secrets/api_key", UID: "0", GID: "0", Mode: 0o444},
+            SecretName: new HashedConfig("/run/secrets/api_key", "s3cr3t", "server").hash,
+        },
+    ]);
 });

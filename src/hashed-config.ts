@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import {SwarmAppConfig} from "./swarm-app-config.js";
+import {SwarmAppConfig, SwarmAppServiceConfig} from "./swarm-app-config.js";
 import fs from "fs";
 import assert, {AssertionError} from "assert";
 
@@ -56,21 +56,30 @@ export class HashedConfigs {
 
 }
 
-export async function initHashedConfigs (config: SwarmAppConfig) {
+async function initHashed (config: SwarmAppConfig, pick: (s: SwarmAppServiceConfig) => Record<string, {source_file?: string; content?: string}> | undefined) {
     const hashedConfigs = new HashedConfigs();
     for (const [serviceName, s] of Object.entries(config.service_specs)) {
-        if (!s.configs) continue;
-        for (const [targetPath, c] of Object.entries(s.configs)) {
+        const entries = pick(s);
+        if (!entries) continue;
+        for (const [targetPath, c] of Object.entries(entries)) {
             let content;
             if (c.content) {
                 content = c.content;
             } else if (c.source_file) {
                 content = await fs.promises.readFile(c.source_file, "utf-8");
             } else {
-                throw new AssertionError({message: `config ${targetPath} missing content or file field`});
+                throw new AssertionError({message: `${targetPath} missing content or source_file field`});
             }
             hashedConfigs.add(new HashedConfig(targetPath, content, serviceName));
         }
     }
     return hashedConfigs;
+}
+
+export async function initHashedConfigs (config: SwarmAppConfig) {
+    return initHashed(config, (s) => s.configs);
+}
+
+export async function initHashedSecrets (config: SwarmAppConfig) {
+    return initHashed(config, (s) => s.secrets);
 }

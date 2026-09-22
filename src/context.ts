@@ -2,7 +2,7 @@ import {assertBooleanOrNull, assertString, assertStringOrNull} from "./asserts.j
 import {expandSwarmAppConfig, loadSwarmAppConfig} from "./swarm-app-config.js";
 import Dockerode from "dockerode";
 import {getCurrent} from "./docker-api.js";
-import {initHashedConfigs} from "./hashed-config.js";
+import {initHashedConfigs, initHashedSecrets} from "./hashed-config.js";
 import {ArgumentsCamelCase} from "yargs";
 import {loadDockerAuths} from "./docker-config.js";
 
@@ -24,8 +24,9 @@ export async function initContext (args: ArgumentsCamelCase) {
     const current = await getCurrent({dockerode, appName});
 
     const hashedConfigs = await initHashedConfigs(config);
+    const hashedSecrets = await initHashedSecrets(config);
 
     const dockerAuths = await loadDockerAuths();
 
-    return {appName, config, dockerode, current, hashedConfigs, dockerAuths};
+    return {appName, config, dockerode, current, hashedConfigs, hashedSecrets, dockerAuths};
 }
