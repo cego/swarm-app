@@ -33,7 +33,7 @@
     "jest": "30.x",
     "jiti": "^2.6.1",
     "ts-jest": "29.x",
-    "typescript": "6.x",
+    "typescript": "7.x",
     "typescript-eslint": "^8.46.4"
   },
   "engines": {
